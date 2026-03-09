@@ -1,5 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Square, Volume2 } from "lucide-react";
+import { ArrowLeft, Check, Copy, Square, Volume2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useActor } from "../hooks/useActor";
 import { useArticleById } from "../hooks/useQueries";
@@ -9,6 +9,9 @@ interface ArticlePageProps {
   articleId: bigint;
   onBack: () => void;
 }
+
+const TIP_ADDRESS =
+  "9243e4dba5135fe82719bdb7e690e10fce1cdf97a470ced1c64927fc4e59e6a8";
 
 function formatDate(dateStr: string): string {
   try {
@@ -43,6 +46,55 @@ function renderBody(body: string) {
       </p>
     );
   });
+}
+
+function TipSection() {
+  const [copied, setCopied] = useState(false);
+
+  function handleCopy() {
+    navigator.clipboard.writeText(TIP_ADDRESS).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  return (
+    <div className="px-5 md:px-10 mt-10 mb-8" data-ocid="article.tip_section">
+      {/* Divider */}
+      <div className="border-t border-white/20 mb-8" />
+
+      {/* Tagline */}
+      <p
+        className="font-sans text-white/50 italic mb-6"
+        style={{ fontSize: "14px", letterSpacing: "0.01em" }}
+      >
+        This isn't a coffee shop. Nobody's watching. Only tip if you want to.
+      </p>
+
+      {/* Wallet address */}
+      <div className="flex items-center gap-3">
+        <span
+          className="font-mono text-white/40 break-all"
+          style={{ fontSize: "11px", letterSpacing: "0.04em" }}
+        >
+          {TIP_ADDRESS}
+        </span>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="flex-shrink-0 text-white/30 hover:text-white/70 transition-colors focus:outline-none"
+          aria-label="Copy wallet address"
+          data-ocid="article.tip_copy_button"
+        >
+          {copied ? (
+            <Check size={13} strokeWidth={1.5} />
+          ) : (
+            <Copy size={13} strokeWidth={1.5} />
+          )}
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export function ArticlePage({ articleId, onBack }: ArticlePageProps) {
@@ -198,6 +250,9 @@ export function ArticlePage({ articleId, onBack }: ArticlePageProps) {
               />
             </div>
           )}
+
+          {/* Tip Section */}
+          <TipSection />
         </>
       )}
 

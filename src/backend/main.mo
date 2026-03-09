@@ -18,7 +18,7 @@ import Storage "blob-storage/Storage";
 actor {
   include MixinStorage();
 
-  let accessControlState = AccessControl.initState();
+  stable let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
 
   // User profile type
@@ -26,7 +26,7 @@ actor {
     name : Text;
   };
 
-  let userProfiles = Map.empty<Principal, UserProfile>();
+  stable let userProfiles = Map.empty<Principal, UserProfile>();
 
   // Article type
   public type Article = {

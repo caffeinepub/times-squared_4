@@ -7,10 +7,13 @@ import Principal "mo:core/Principal";
 import Runtime "mo:core/Runtime";
 import Text "mo:core/Text";
 import Iter "mo:core/Iter";
+
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
 import MixinStorage "blob-storage/Mixin";
 import Storage "blob-storage/Storage";
+
+// Perform database migration on upgrade
 
 actor {
   include MixinStorage();
@@ -39,8 +42,17 @@ actor {
     createdAt : Int;
   };
 
-  // Article store
-  let articles = Map.empty<Nat, Article>();
+  // View count record returned to admin dashboard
+  public type ViewCount = {
+    articleId : Nat;
+    viewCount : Nat;
+  };
+
+  // Article store - stable variable
+  stable let articles = Map.empty<Nat, Article>();
+
+  // Per-article view counts - stable variable
+  stable let viewCounts = Map.empty<Nat, Nat>();
 
   // Custom Errors
   module Error {
@@ -49,7 +61,8 @@ actor {
     public let internal = "Internal error";
   };
 
-  var articleIdCounter = 0;
+  // ArticleIdCounter now stable variable
+  stable var articleIdCounter = 0;
 
   module Article {
     public func compare(article1 : Article, article2 : Article) : Order.Order {
@@ -201,6 +214,38 @@ actor {
     #ok;
   };
 
+  // Record a view for an article (no auth required, no-op if article missing)
+  public shared func recordView(id : Nat) : async () {
+    if (not articles.containsKey(id)) {
+      return;
+    };
+    let current = switch (viewCounts.get(id)) {
+      case (?count) { count };
+      case (null) { 0 };
+    };
+    viewCounts.add(id, current + 1);
+  };
+
+  // Return per-article view counts (admin only)
+  public query ({ caller }) func getViewCounts() : async [ViewCount] {
+    requireAdmin(caller);
+    let result = List.empty<ViewCount>();
+    for ((articleId, count) in viewCounts.entries()) {
+      result.add({ articleId; viewCount = count });
+    };
+    result.toArray();
+  };
+
+  // Return total view count across all articles (admin only)
+  public query ({ caller }) func getTotalViewCount() : async Nat {
+    requireAdmin(caller);
+    var total = 0;
+    for (count in viewCounts.values()) {
+      total += count;
+    };
+    total;
+  };
+
   public query func getPublishedArticles() : async [Article] {
     let publishedList = List.empty<Article>();
     let publishedArticles = articles.values().filter(func(article) { article.isPublished });
@@ -210,7 +255,7 @@ actor {
 
   public query ({ caller }) func getAllArticles() : async [Article] {
     if (not (AccessControl.isAdmin(accessControlState, caller))) {
-      return [];
+      Runtime.trap("Unauthorized: Only admins can view all articles");
     };
 
     let allList = List.empty<Article>();

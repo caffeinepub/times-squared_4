@@ -104,6 +104,10 @@ export interface Article {
     excerpt: string;
     heroImageBlobId?: string;
 }
+export interface ViewCount {
+    articleId: bigint;
+    viewCount: bigint;
+}
 export interface _CaffeineStorageCreateCertificateResult {
     method: string;
     blob_hash: string;
@@ -148,7 +152,9 @@ export interface backendInterface {
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getPublishedArticles(): Promise<Array<Article>>;
+    getTotalViewCount(): Promise<bigint>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    getViewCounts(): Promise<Array<ViewCount>>;
     isCallerAdmin(): Promise<boolean>;
     publishArticle(id: bigint): Promise<{
         __kind__: "ok";
@@ -157,6 +163,7 @@ export interface backendInterface {
         __kind__: "err";
         err: string;
     }>;
+    recordView(id: bigint): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     unpublishArticle(id: bigint): Promise<{
         __kind__: "ok";
@@ -398,6 +405,20 @@ export class Backend implements backendInterface {
             return from_candid_vec_n13(this._uploadFile, this._downloadFile, result);
         }
     }
+    async getTotalViewCount(): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getTotalViewCount();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getTotalViewCount();
+            return result;
+        }
+    }
     async getUserProfile(arg0: Principal): Promise<UserProfile | null> {
         if (this.processError) {
             try {
@@ -410,6 +431,20 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.getUserProfile(arg0);
             return from_candid_opt_n18(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getViewCounts(): Promise<Array<ViewCount>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getViewCounts();
+                return result.map((item) => ({ articleId: item.articleId, viewCount: item.viewCount }));
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getViewCounts();
+            return result.map((item) => ({ articleId: item.articleId, viewCount: item.viewCount }));
         }
     }
     async isCallerAdmin(): Promise<boolean> {
@@ -444,6 +479,20 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.publishArticle(arg0);
             return from_candid_variant_n12(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async recordView(arg0: bigint): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.recordView(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.recordView(arg0);
+            return result;
         }
     }
     async saveCallerUserProfile(arg0: UserProfile): Promise<void> {

@@ -22,6 +22,10 @@ export interface Article {
     excerpt: string;
     heroImageBlobId?: string;
 }
+export interface ViewCount {
+    articleId: bigint;
+    viewCount: bigint;
+}
 export enum UserRole {
     admin = "admin",
     user = "user",
@@ -49,6 +53,8 @@ export interface backendInterface {
     getCallerUserRole(): Promise<UserRole>;
     getPublishedArticles(): Promise<Array<Article>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    getTotalViewCount(): Promise<bigint>;
+    getViewCounts(): Promise<Array<ViewCount>>;
     isCallerAdmin(): Promise<boolean>;
     publishArticle(id: bigint): Promise<{
         __kind__: "ok";
@@ -57,6 +63,7 @@ export interface backendInterface {
         __kind__: "err";
         err: string;
     }>;
+    recordView(id: bigint): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     unpublishArticle(id: bigint): Promise<{
         __kind__: "ok";

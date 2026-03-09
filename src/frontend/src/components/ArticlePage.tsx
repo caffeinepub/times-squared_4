@@ -1,6 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Square, Volume2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { useActor } from "../hooks/useActor";
 import { useArticleById } from "../hooks/useQueries";
 import { BlobImage } from "./BlobImage";
 
@@ -27,7 +28,6 @@ function renderBody(body: string) {
   const paragraphs = body.split(/\n\n+/);
   return paragraphs.map((para, i) => {
     const lines = para.split(/\n/);
-    // Use stable key based on content prefix + index for static text rendering
     const paraKey = `para-${i}-${para.slice(0, 20)}`;
     return (
       <p key={paraKey} className="mb-6 last:mb-0">
@@ -47,8 +47,19 @@ function renderBody(body: string) {
 
 export function ArticlePage({ articleId, onBack }: ArticlePageProps) {
   const { data: article, isLoading } = useArticleById(articleId);
+  const { actor } = useActor();
   const [isSpeaking, setIsSpeaking] = useState(false);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const hasRecordedView = useRef(false);
+
+  // Record a view once when the article loads successfully
+  useEffect(() => {
+    if (!actor || !article || hasRecordedView.current) return;
+    hasRecordedView.current = true;
+    actor.recordView(article.id).catch(() => {
+      // Silently ignore view recording failures
+    });
+  }, [actor, article]);
 
   // Cleanup speech on unmount
   useEffect(() => {

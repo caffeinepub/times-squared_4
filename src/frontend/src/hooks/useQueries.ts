@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { Article } from "../backend.d";
+import type { Article, ViewCount } from "../backend.d";
 import { useActor } from "./useActor";
 
 export function usePublishedArticles() {
@@ -45,6 +45,30 @@ export function useIsCallerAdmin() {
     queryFn: async () => {
       if (!actor) return false;
       return actor.isCallerAdmin();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useViewCounts() {
+  const { actor, isFetching } = useActor();
+  return useQuery<ViewCount[]>({
+    queryKey: ["view-counts"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getViewCounts();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useTotalViewCount() {
+  const { actor, isFetching } = useActor();
+  return useQuery<bigint>({
+    queryKey: ["total-view-count"],
+    queryFn: async () => {
+      if (!actor) return BigInt(0);
+      return actor.getTotalViewCount();
     },
     enabled: !!actor && !isFetching,
   });

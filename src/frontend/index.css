@@ -1,0 +1,168 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --radius: 0rem;
+    /* Pure black editorial theme */
+    --background: 0 0 0;
+    --foreground: 1 0 0;
+    --card: 0.05 0 0;
+    --card-foreground: 1 0 0;
+    --popover: 0.08 0 0;
+    --popover-foreground: 1 0 0;
+    --primary: 1 0 0;
+    --primary-foreground: 0 0 0;
+    --secondary: 0.12 0 0;
+    --secondary-foreground: 1 0 0;
+    --muted: 0.12 0 0;
+    --muted-foreground: 0.6 0 0;
+    --accent: 0.15 0 0;
+    --accent-foreground: 1 0 0;
+    --destructive: 0.577 0.245 27.325;
+    --destructive-foreground: 1 0 0;
+    --border: 1 0 0;
+    --input: 0.2 0 0;
+    --ring: 0.7 0 0;
+    --chart-1: 0.646 0.222 41.116;
+    --chart-2: 0.6 0.118 184.704;
+    --chart-3: 0.398 0.07 227.392;
+    --chart-4: 0.828 0.189 84.429;
+    --chart-5: 0.769 0.188 70.08;
+    --sidebar: 0.05 0 0;
+    --sidebar-foreground: 1 0 0;
+    --sidebar-primary: 1 0 0;
+    --sidebar-primary-foreground: 0 0 0;
+    --sidebar-accent: 0.12 0 0;
+    --sidebar-accent-foreground: 1 0 0;
+    --sidebar-border: 1 0 0;
+    --sidebar-ring: 0.5 0 0;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: #000000;
+    color: #ffffff;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #000;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  /* Selection */
+  ::selection {
+    background: #ffffff;
+    color: #000000;
+  }
+}
+
+/* Typography helpers */
+.font-blackletter {
+  font-family: 'UnifrakturMaguntia', serif;
+}
+
+.font-editorial {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.font-sans-body {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* Section label style */
+.section-label {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 300;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+
+/* 1px white rule */
+.rule-white {
+  border-top: 1px solid rgba(255, 255, 255, 0.9);
+}
+
+/* Article excerpt text */
+.excerpt-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Nav drawer animation */
+.nav-drawer-enter {
+  transform: translateX(-100%);
+}
+.nav-drawer-enter-active {
+  transform: translateX(0);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.nav-drawer-exit {
+  transform: translateX(0);
+}
+.nav-drawer-exit-active {
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Image reset */
+img {
+  border-radius: 0 !important;
+}
+
+/* Read aloud pill button */
+.read-aloud-btn {
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  background: #000;
+  color: #fff;
+  padding: 12px 28px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.2s, color 0.2s;
+}
+.read-aloud-btn:hover {
+  background: #fff;
+  color: #000;
+}
+
+/* Admin layout */
+.admin-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+@media (min-width: 1024px) {
+  .admin-grid {
+    grid-template-columns: 420px 1fr;
+  }
+}

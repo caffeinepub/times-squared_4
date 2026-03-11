@@ -1,4 +1,6 @@
+import { Check, Link2 } from "lucide-react";
 import { motion } from "motion/react";
+import { useState } from "react";
 import type { Article } from "../backend.d";
 import { usePublishedArticles } from "../hooks/useQueries";
 import { BlobImage } from "./BlobImage";
@@ -18,6 +20,42 @@ function formatDate(dateStr: string): string {
   } catch {
     return dateStr;
   }
+}
+
+function CopyLinkButton({ articleId }: { articleId: bigint }) {
+  const [copied, setCopied] = useState(false);
+
+  function handleCopy(e: React.MouseEvent) {
+    e.stopPropagation();
+    const url = `${window.location.origin}/article/${articleId}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      data-ocid="article_card.copy_link.button"
+      className="inline-flex items-center gap-1.5 font-sans text-white/30 hover:text-white/70 transition-colors focus:outline-none"
+      style={{ fontSize: "11px", letterSpacing: "0.08em" }}
+      aria-label="Copy article link"
+    >
+      {copied ? (
+        <>
+          <Check size={11} strokeWidth={2.5} />
+          <span className="uppercase tracking-widest">Copied</span>
+        </>
+      ) : (
+        <>
+          <Link2 size={11} strokeWidth={2} />
+          <span className="uppercase tracking-widest">Copy link</span>
+        </>
+      )}
+    </button>
+  );
 }
 
 function ArticleCard({
@@ -63,6 +101,9 @@ function ArticleCard({
           {article.excerpt}
         </p>
       </button>
+      <div className="mt-3">
+        <CopyLinkButton articleId={article.id} />
+      </div>
     </motion.div>
   );
 }
@@ -171,6 +212,9 @@ export function HomePage({ onArticleClick }: HomePageProps) {
           >
             {featured.excerpt}
           </p>
+          <div className="mt-4">
+            <CopyLinkButton articleId={featured.id} />
+          </div>
         </section>
       ) : !isLoading ? (
         <section className="px-5 md:px-10 pt-8 pb-6">

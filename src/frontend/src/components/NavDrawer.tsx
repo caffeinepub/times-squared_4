@@ -8,6 +8,7 @@ import {
   EyeOff,
   Loader2,
   Pencil,
+  RefreshCw,
   Trash2,
   TrendingUp,
   X,
@@ -339,6 +340,14 @@ function AdminPanelView({ onBack, onLogout }: AdminPanelViewProps) {
     ? [...articles].sort((a, b) => Number(b.createdAt) - Number(a.createdAt))
     : [];
 
+  // Invalidate view count queries when switching to analytics tab
+  useEffect(() => {
+    if (activeTab === "analytics") {
+      queryClient.invalidateQueries({ queryKey: ["view-counts"] });
+      queryClient.invalidateQueries({ queryKey: ["total-view-count"] });
+    }
+  }, [activeTab, queryClient]);
+
   function handleImageSelect(slot: 1 | 2) {
     (slot === 1 ? fileInput1Ref : fileInput2Ref).current?.click();
   }
@@ -379,6 +388,11 @@ function AdminPanelView({ onBack, onLogout }: AdminPanelViewProps) {
     setEditingId(null);
     setUploadProgress1(null);
     setUploadProgress2(null);
+  }
+
+  function handleRefreshAnalytics() {
+    queryClient.invalidateQueries({ queryKey: ["view-counts"] });
+    queryClient.invalidateQueries({ queryKey: ["total-view-count"] });
   }
 
   async function handleSubmit(shouldPublish: boolean) {
@@ -567,7 +581,10 @@ function AdminPanelView({ onBack, onLogout }: AdminPanelViewProps) {
           />
         )}
         {activeTab === "analytics" && (
-          <AnalyticsDashboard articles={sortedArticles} />
+          <AnalyticsDashboard
+            articles={sortedArticles}
+            onRefresh={handleRefreshAnalytics}
+          />
         )}
       </div>
     </motion.div>
@@ -578,9 +595,10 @@ function AdminPanelView({ onBack, onLogout }: AdminPanelViewProps) {
 
 interface AnalyticsDashboardProps {
   articles: Article[];
+  onRefresh: () => void;
 }
 
-function AnalyticsDashboard({ articles }: AnalyticsDashboardProps) {
+function AnalyticsDashboard({ articles, onRefresh }: AnalyticsDashboardProps) {
   const { data: viewCounts, isLoading: countsLoading } = useViewCounts();
   const { data: totalViews, isLoading: totalLoading } = useTotalViewCount();
 
@@ -625,7 +643,18 @@ function AnalyticsDashboard({ articles }: AnalyticsDashboardProps) {
 
       {/* Per-article breakdown */}
       <div>
-        <p className="section-label text-white/40 mb-4">By Article</p>
+        <div className="flex items-center justify-between mb-4">
+          <p className="section-label text-white/40">By Article</p>
+          <button
+            type="button"
+            onClick={onRefresh}
+            className="text-white/30 hover:text-white/60 transition-colors focus:outline-none"
+            aria-label="Refresh view counts"
+            data-ocid="admin.analytics.button"
+          >
+            <RefreshCw size={13} strokeWidth={1.5} />
+          </button>
+        </div>
 
         {isLoading && (
           <div className="space-y-3" data-ocid="admin.analytics.loading_state">

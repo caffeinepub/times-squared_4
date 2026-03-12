@@ -214,11 +214,10 @@ actor {
     #ok;
   };
 
-  // Record a view for an article (no auth required, no-op if article missing)
+  // Record a view for an article (no auth required)
+  // Always attempts to increment — does not guard on article existence
+  // to avoid silent failures from Map equality edge cases.
   public shared func recordView(id : Nat) : async () {
-    if (not articles.containsKey(id)) {
-      return;
-    };
     let current = switch (viewCounts.get(id)) {
       case (?count) { count };
       case (null) { 0 };

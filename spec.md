@@ -1,37 +1,24 @@
 # Times Squared
 
 ## Current State
-
-The app is a privacy-first on-chain news publication. The admin panel lives inside the nav drawer and has two tabs: "New Article" and "All Articles". Articles are stored stably on the backend.
-
-The backend has no view counting. The `Article` type has no view count field. There are no backend functions for recording or retrieving view counts.
-
-The frontend `ArticlePage` does not call any view-recording function when an article is opened.
+View analytics exist: `recordView` increments a `viewCounts` Map keyed by article Nat ID. The analytics dashboard queries `getViewCounts` and `getTotalViewCount` (admin only). The privacy manifesto contains the phrase "no such record is kept" which conflicts with the existence of anonymous view counts.
 
 ## Requested Changes (Diff)
 
 ### Add
-- `stable` `viewCounts` map (`Nat -> Nat`) on the backend to store per-article view counts, keyed by article ID.
-- `recordView(id: Nat)` public shared function: increments the view count for an article. No auth required (anyone can trigger it). No-ops if article doesn't exist.
-- `getViewCounts()` public query function (admin-only): returns an array of `{ articleId: Nat; viewCount: Nat }` records for all articles that have at least one view.
-- `getTotalViewCount()` public query function (admin-only): returns the sum of all view counts as a `Nat`.
-- A third tab "Analytics" in the `AdminPanelView` in `NavDrawer.tsx`.
-- An `AnalyticsDashboard` panel component inside `NavDrawer.tsx` that shows: total views across all articles, and a ranked list of per-article view counts (title + count).
-- `useViewCounts` query hook in `useQueries.ts`.
-- A `recordView` call in `ArticlePage.tsx` when the article loads (fires once per page load, no identity required).
+- Force-refetch view counts when the analytics tab is activated in the admin panel
+- A manual refresh button on the analytics dashboard
 
 ### Modify
-- `AdminTab` type in `NavDrawer.tsx`: add `"analytics"` as a valid tab value.
-- The tabs row in `AdminPanelView`: add the Analytics tab button.
-- `backend.d.ts`: add `recordView`, `getViewCounts`, `getTotalViewCount` to `backendInterface`. Add `ViewCount` type.
+- Backend `recordView`: remove `articles.containsKey(id)` guard; always attempt to increment, using `switch` on `viewCounts.get(id)` directly (safer, avoids silent early-return)
+- `useViewCounts` and `useTotalViewCount` hooks: add `refetchOnMount: 'always'`
+- Privacy manifesto: change "because no such record is kept" to "because no record of who reads what is ever kept" to accurately reflect that anonymous view counts (not linked to any reader) do exist
 
 ### Remove
-- Nothing removed.
+- Nothing
 
 ## Implementation Plan
-
-1. Add `stable let viewCounts` map and three new functions (`recordView`, `getViewCounts`, `getTotalViewCount`) to `src/backend/main.mo`.
-2. Update `src/frontend/src/backend.d.ts` with `ViewCount` interface and the three new backend method signatures.
-3. Add `useViewCounts` and `useTotalViewCount` hooks to `src/frontend/src/hooks/useQueries.ts`.
-4. Call `actor.recordView(articleId)` inside `ArticlePage.tsx` in a `useEffect` that runs once when the article loads.
-5. Add `"analytics"` to `AdminTab` type and wire up the new Analytics tab and `AnalyticsDashboard` panel in `NavDrawer.tsx`.
+1. Edit `src/backend/main.mo`: remove `containsKey` check from `recordView`
+2. Edit `src/frontend/src/hooks/useQueries.ts`: add `refetchOnMount: 'always'` to `useViewCounts` and `useTotalViewCount`
+3. Edit `src/frontend/src/components/NavDrawer.tsx`: invalidate/refetch view count queries when analytics tab is activated; add a small refresh button
+4. Edit `src/frontend/src/components/PrivacyPage.tsx`: update manifesto wording

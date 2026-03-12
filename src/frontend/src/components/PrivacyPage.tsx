@@ -36,7 +36,7 @@ export function PrivacyPage() {
           The legacy web has normalized surveillance as the price of publishing.
           Readers are tracked, profiled, and sold. Writers surrender their data
           to intermediaries in exchange for distribution. TIMES² refuses this
-          arrangement entirely. There are no analytics, no cookies, no
+          arrangement entirely. There are no tracking cookies, no
           fingerprinting, no advertising networks observing you as you read
           these words. Your attention is not the product.
         </p>
@@ -44,9 +44,9 @@ export function PrivacyPage() {
         <p>
           Privacy is not a feature we added. It is the architecture. On-chain
           publishing means there is no central operator capable of disclosing
-          your reading habits to a third party — because no such record is kept.
-          The boundary between reader and text is yours alone. What you think
-          about what you read belongs to you.
+          your reading habits to a third party — because no record of who reads
+          what is ever kept. The boundary between reader and text is yours
+          alone. What you think about what you read belongs to you.
         </p>
 
         <p>

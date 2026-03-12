@@ -59,6 +59,7 @@ export function useViewCounts() {
       return actor.getViewCounts();
     },
     enabled: !!actor && !isFetching,
+    refetchOnMount: "always",
   });
 }
 
@@ -71,6 +72,7 @@ export function useTotalViewCount() {
       return actor.getTotalViewCount();
     },
     enabled: !!actor && !isFetching,
+    refetchOnMount: "always",
   });
 }
 

@@ -1,7 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Check, Copy, Square, Volume2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useActor } from "../hooks/useActor";
 import { useArticleById } from "../hooks/useQueries";
 import { BlobImage } from "./BlobImage";
 
@@ -99,19 +98,8 @@ function TipSection() {
 
 export function ArticlePage({ articleId, onBack }: ArticlePageProps) {
   const { data: article, isLoading } = useArticleById(articleId);
-  const { actor } = useActor();
   const [isSpeaking, setIsSpeaking] = useState(false);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
-  const hasRecordedView = useRef(false);
-
-  // Record a view once when the article loads successfully
-  useEffect(() => {
-    if (!actor || !article || hasRecordedView.current) return;
-    hasRecordedView.current = true;
-    actor.recordView(article.id).catch(() => {
-      // Silently ignore view recording failures
-    });
-  }, [actor, article]);
 
   // Cleanup speech on unmount
   useEffect(() => {

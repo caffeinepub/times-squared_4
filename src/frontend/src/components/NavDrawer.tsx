@@ -8,16 +8,14 @@ import {
   EyeOff,
   Loader2,
   Pencil,
-  RefreshCw,
   Trash2,
-  TrendingUp,
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { Page } from "../App";
-import type { Article, ViewCount } from "../backend.d";
+import type { Article } from "../backend.d";
 import { useActor } from "../hooks/useActor";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
 import {
@@ -25,9 +23,7 @@ import {
   useDeleteArticle,
   useIsCallerAdmin,
   usePublishArticle,
-  useTotalViewCount,
   useUnpublishArticle,
-  useViewCounts,
 } from "../hooks/useQueries";
 import { uploadImage } from "../utils/imageStorage";
 
@@ -54,7 +50,7 @@ interface ArticleFormData {
 }
 
 type DrawerView = "nav" | "admin";
-type AdminTab = "new" | "list" | "analytics";
+type AdminTab = "new" | "list";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -137,7 +133,6 @@ export function NavDrawer({
     navigate({ name: "home" });
   }
 
-  // Drawer width: wider when in admin mode
   const drawerWidth =
     drawerView === "admin" ? "w-full md:w-[520px]" : "w-[300px]";
 
@@ -157,7 +152,7 @@ export function NavDrawer({
             aria-hidden="true"
           />
 
-          {/* Drawer shell — width animates when switching views */}
+          {/* Drawer shell */}
           <motion.div
             key="drawer"
             initial={{ x: "-100%" }}
@@ -259,10 +254,8 @@ function NavView({
           Privacy Manifesto
         </button>
 
-        {/* Divider above last item */}
         <div className="border-t border-white/80 mt-4 mb-2" />
 
-        {/* Bottom nav item: Login, Admin, or Logout */}
         {!isLoggedIn && (
           <button
             type="button"
@@ -340,14 +333,6 @@ function AdminPanelView({ onBack, onLogout }: AdminPanelViewProps) {
     ? [...articles].sort((a, b) => Number(b.createdAt) - Number(a.createdAt))
     : [];
 
-  // Invalidate view count queries when switching to analytics tab
-  useEffect(() => {
-    if (activeTab === "analytics") {
-      queryClient.invalidateQueries({ queryKey: ["view-counts"] });
-      queryClient.invalidateQueries({ queryKey: ["total-view-count"] });
-    }
-  }, [activeTab, queryClient]);
-
   function handleImageSelect(slot: 1 | 2) {
     (slot === 1 ? fileInput1Ref : fileInput2Ref).current?.click();
   }
@@ -388,11 +373,6 @@ function AdminPanelView({ onBack, onLogout }: AdminPanelViewProps) {
     setEditingId(null);
     setUploadProgress1(null);
     setUploadProgress2(null);
-  }
-
-  function handleRefreshAnalytics() {
-    queryClient.invalidateQueries({ queryKey: ["view-counts"] });
-    queryClient.invalidateQueries({ queryKey: ["total-view-count"] });
   }
 
   async function handleSubmit(shouldPublish: boolean) {
@@ -536,19 +516,6 @@ function AdminPanelView({ onBack, onLogout }: AdminPanelViewProps) {
         >
           Articles {articles ? `(${articles.length})` : ""}
         </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("analytics")}
-          className={`flex-1 py-3 text-xs font-sans tracking-widest uppercase transition-colors focus:outline-none flex items-center justify-center gap-1 ${
-            activeTab === "analytics"
-              ? "text-white border-b border-white"
-              : "text-white/30 hover:text-white/60"
-          }`}
-          data-ocid="nav.admin_panel.analytics_tab"
-        >
-          <TrendingUp size={11} strokeWidth={1.5} />
-          Views
-        </button>
       </div>
 
       {/* Scrollable content */}
@@ -580,138 +547,8 @@ function AdminPanelView({ onBack, onLogout }: AdminPanelViewProps) {
             onEdit={handleEditArticle}
           />
         )}
-        {activeTab === "analytics" && (
-          <AnalyticsDashboard
-            articles={sortedArticles}
-            onRefresh={handleRefreshAnalytics}
-          />
-        )}
       </div>
     </motion.div>
-  );
-}
-
-// ─── Analytics Dashboard ──────────────────────────────────────────────────────
-
-interface AnalyticsDashboardProps {
-  articles: Article[];
-  onRefresh: () => void;
-}
-
-function AnalyticsDashboard({ articles, onRefresh }: AnalyticsDashboardProps) {
-  const { data: viewCounts, isLoading: countsLoading } = useViewCounts();
-  const { data: totalViews, isLoading: totalLoading } = useTotalViewCount();
-
-  // Build a lookup map from articleId -> title
-  const titleMap = new Map<string, string>();
-  for (const a of articles) {
-    titleMap.set(a.id.toString(), a.title);
-  }
-
-  // Sort view counts descending
-  const sortedCounts: ViewCount[] = viewCounts
-    ? [...viewCounts].sort((a, b) => Number(b.viewCount) - Number(a.viewCount))
-    : [];
-
-  const maxCount =
-    sortedCounts.length > 0 ? Number(sortedCounts[0].viewCount) : 1;
-
-  const isLoading = countsLoading || totalLoading;
-
-  return (
-    <div className="p-5 space-y-6" data-ocid="admin.analytics.panel">
-      {/* Total views card */}
-      <div className="border border-white/15 p-5">
-        <p className="section-label text-white/40 mb-2">Total Views</p>
-        {isLoading ? (
-          <div
-            className="h-10 w-24 bg-white/5 animate-pulse"
-            data-ocid="admin.analytics.loading_state"
-          />
-        ) : (
-          <p
-            className="font-editorial font-bold text-white"
-            style={{ fontSize: "clamp(2rem, 6vw, 3rem)" }}
-            data-ocid="admin.analytics.total_views"
-          >
-            {totalViews !== undefined
-              ? Number(totalViews).toLocaleString()
-              : "0"}
-          </p>
-        )}
-      </div>
-
-      {/* Per-article breakdown */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <p className="section-label text-white/40">By Article</p>
-          <button
-            type="button"
-            onClick={onRefresh}
-            className="text-white/30 hover:text-white/60 transition-colors focus:outline-none"
-            aria-label="Refresh view counts"
-            data-ocid="admin.analytics.button"
-          >
-            <RefreshCw size={13} strokeWidth={1.5} />
-          </button>
-        </div>
-
-        {isLoading && (
-          <div className="space-y-3" data-ocid="admin.analytics.loading_state">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-10 bg-white/5 animate-pulse" />
-            ))}
-          </div>
-        )}
-
-        {!isLoading && sortedCounts.length === 0 && (
-          <div
-            className="py-12 text-center"
-            data-ocid="admin.analytics.empty_state"
-          >
-            <p className="font-sans text-white/25 text-xs tracking-widest uppercase">
-              No views recorded yet
-            </p>
-          </div>
-        )}
-
-        {!isLoading && sortedCounts.length > 0 && (
-          <div className="space-y-4">
-            {sortedCounts.map((entry, idx) => {
-              const title =
-                titleMap.get(entry.articleId.toString()) ??
-                `Article #${entry.articleId.toString()}`;
-              const pct =
-                maxCount > 0 ? (Number(entry.viewCount) / maxCount) * 100 : 0;
-              return (
-                <div
-                  key={entry.articleId.toString()}
-                  data-ocid={`admin.analytics.item.${idx + 1}`}
-                >
-                  <div className="flex items-baseline justify-between gap-3 mb-1.5">
-                    <p
-                      className="font-sans text-white/80 text-xs leading-snug truncate flex-1"
-                      title={title}
-                    >
-                      {title}
-                    </p>
-                    <p className="font-sans text-white font-semibold text-sm shrink-0 tabular-nums">
-                      {Number(entry.viewCount).toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="h-px bg-white/8 w-full overflow-hidden">
-                    <div
-                      className="h-full bg-white/60 transition-all duration-500"
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </div>
   );
 }
 

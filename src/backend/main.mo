@@ -42,16 +42,10 @@ actor {
     createdAt : Int;
   };
 
-  // View count record returned to admin dashboard
-  public type ViewCount = {
-    articleId : Nat;
-    viewCount : Nat;
-  };
-
   // Article store - stable variable
   stable let articles = Map.empty<Nat, Article>();
 
-  // Per-article view counts - stable variable
+  // Retained for upgrade compatibility only — view counting has been removed.
   stable let viewCounts = Map.empty<Nat, Nat>();
 
   // Custom Errors
@@ -212,37 +206,6 @@ actor {
 
     articles.remove(id);
     #ok;
-  };
-
-  // Record a view for an article (no auth required)
-  // Always attempts to increment — does not guard on article existence
-  // to avoid silent failures from Map equality edge cases.
-  public shared func recordView(id : Nat) : async () {
-    let current = switch (viewCounts.get(id)) {
-      case (?count) { count };
-      case (null) { 0 };
-    };
-    viewCounts.add(id, current + 1);
-  };
-
-  // Return per-article view counts (admin only)
-  public query ({ caller }) func getViewCounts() : async [ViewCount] {
-    requireAdmin(caller);
-    let result = List.empty<ViewCount>();
-    for ((articleId, count) in viewCounts.entries()) {
-      result.add({ articleId; viewCount = count });
-    };
-    result.toArray();
-  };
-
-  // Return total view count across all articles (admin only)
-  public query ({ caller }) func getTotalViewCount() : async Nat {
-    requireAdmin(caller);
-    var total = 0;
-    for (count in viewCounts.values()) {
-      total += count;
-    };
-    total;
   };
 
   public query func getPublishedArticles() : async [Article] {
